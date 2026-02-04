@@ -275,7 +275,7 @@ def fetch_reddit_post(url: str) -> tuple:
     client_secret = os.getenv('REDDIT_CLIENT_SECRET')
     
     if not client_id or not client_secret:
-        return None, "Reddit API credentials not configured"
+        return None, "Gaurav needs to work on this coming Sunday. Please wait till then to get this LIVE!"
     
     try:
         reddit = praw.Reddit(
