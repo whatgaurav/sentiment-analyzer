@@ -409,6 +409,32 @@
             font-weight: 500;
         }
 
+        .language-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .language-badge {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .analysis-method {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #8892b0;
+        }
+
         .error-message {
             background: rgba(255, 71, 87, 0.2);
             border: 1px solid #ff4757;
@@ -519,6 +545,15 @@
                 </div>
             </div>
 
+            <!-- Language Detection -->
+            <div class="result-card" id="language-card">
+                <h2>🌍 Language Detection</h2>
+                <div class="language-info">
+                    <div class="language-badge" id="language-name">English</div>
+                    <div class="analysis-method" id="analysis-method">VADER (local)</div>
+                </div>
+            </div>
+
             <!-- Overall Sentiment -->
             <div class="result-card">
                 <h2>📊 Overall Sentiment</h2>
@@ -581,7 +616,7 @@
         </section>
 
         <footer>
-            <p>Powered by VADER Sentiment Analysis & TextBlob</p>
+            <p>Powered by VADER, XLM-RoBERTa & TextBlob | Supports 100+ Languages</p>
         </footer>
     </div>
 
@@ -678,6 +713,10 @@
             } else {
                 metaCard.style.display = 'none';
             }
+            
+            // Language detection
+            document.getElementById('language-name').textContent = data.language || 'English';
+            document.getElementById('analysis-method').textContent = data.analysis_method || 'VADER (local)';
             
             // Overall sentiment
             const badge = document.getElementById('sentiment-badge');

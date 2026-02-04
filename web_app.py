@@ -2,15 +2,18 @@
 """
 Sentiment Analysis Web Application
 A modern web UI for analyzing sentiment of text and Reddit posts.
+Supports 100+ languages via hybrid VADER + HuggingFace approach.
 """
 
 import os
+import requests
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from nltk.tokenize import sent_tokenize
 from textblob import TextBlob
+from langdetect import detect, LangDetectException
 import nltk
 import praw
 
@@ -32,26 +35,136 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
 CORS(app)  # Enable cross-origin requests from any website
 
+# Language names for display
+LANGUAGE_NAMES = {
+    'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
+    'it': 'Italian', 'pt': 'Portuguese', 'nl': 'Dutch', 'ru': 'Russian',
+    'zh-cn': 'Chinese (Simplified)', 'zh-tw': 'Chinese (Traditional)',
+    'ja': 'Japanese', 'ko': 'Korean', 'ar': 'Arabic', 'hi': 'Hindi',
+    'bn': 'Bengali', 'pa': 'Punjabi', 'te': 'Telugu', 'mr': 'Marathi',
+    'ta': 'Tamil', 'ur': 'Urdu', 'gu': 'Gujarati', 'kn': 'Kannada',
+    'ml': 'Malayalam', 'th': 'Thai', 'vi': 'Vietnamese', 'tr': 'Turkish',
+    'pl': 'Polish', 'uk': 'Ukrainian', 'ro': 'Romanian', 'el': 'Greek',
+    'hu': 'Hungarian', 'cs': 'Czech', 'sv': 'Swedish', 'da': 'Danish',
+    'fi': 'Finnish', 'no': 'Norwegian', 'he': 'Hebrew', 'id': 'Indonesian',
+    'ms': 'Malay', 'tl': 'Filipino', 'sw': 'Swahili', 'af': 'Afrikaans',
+}
 
-class SentimentAnalyzer:
-    """Performs sentiment analysis."""
+
+class HybridSentimentAnalyzer:
+    """
+    Hybrid sentiment analyzer supporting 100+ languages.
+    - English: Fast local VADER analysis
+    - Other languages: HuggingFace Inference API
+    - Fallback: VADER if API fails
+    """
+    
+    # HuggingFace Inference API (free, no key required for public models)
+    HF_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-xlm-roberta-base-sentiment"
     
     def __init__(self):
         self.sia = SentimentIntensityAnalyzer()
     
-    def analyze(self, text: str) -> dict:
-        """Perform comprehensive sentiment analysis."""
-        
-        # VADER sentiment
+    def detect_language(self, text: str) -> tuple:
+        """Detect language of text. Returns (code, name)."""
+        try:
+            code = detect(text)
+            name = LANGUAGE_NAMES.get(code, code.upper())
+            return code, name
+        except LangDetectException:
+            return 'en', 'English'
+    
+    def analyze_with_huggingface(self, text: str) -> dict:
+        """
+        Analyze sentiment using HuggingFace multilingual model.
+        Returns None if API fails (triggers fallback to VADER).
+        """
+        try:
+            response = requests.post(
+                self.HF_API_URL,
+                json={"inputs": text[:512]},  # Model max length
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                return None
+            
+            results = response.json()
+            
+            # Handle model loading state
+            if isinstance(results, dict) and 'error' in results:
+                return None
+            
+            # Parse results: [{"label": "positive", "score": 0.95}, ...]
+            if results and isinstance(results, list) and isinstance(results[0], list):
+                scores = {item['label']: item['score'] for item in results[0]}
+                
+                # Map to our format (model uses: positive, neutral, negative)
+                pos = scores.get('positive', 0)
+                neg = scores.get('negative', 0)
+                neu = scores.get('neutral', 0)
+                
+                # Calculate compound score similar to VADER (-1 to 1)
+                compound = pos - neg
+                
+                return {
+                    'compound': round(compound, 3),
+                    'positive': round(pos * 100, 1),
+                    'negative': round(neg * 100, 1),
+                    'neutral': round(neu * 100, 1),
+                }
+            
+            return None
+            
+        except Exception:
+            return None
+    
+    def analyze_with_vader(self, text: str) -> dict:
+        """Analyze sentiment using local VADER."""
         vader = self.sia.polarity_scores(text)
+        return {
+            'compound': round(vader['compound'], 3),
+            'positive': round(vader['pos'] * 100, 1),
+            'negative': round(vader['neg'] * 100, 1),
+            'neutral': round(vader['neu'] * 100, 1),
+        }
+    
+    def analyze(self, text: str) -> dict:
+        """
+        Perform comprehensive sentiment analysis.
+        Uses VADER for English, HuggingFace for other languages.
+        """
+        # Detect language
+        lang_code, lang_name = self.detect_language(text)
+        is_english = lang_code == 'en'
         
-        # TextBlob sentiment
+        # Choose analysis method
+        if is_english:
+            sentiment = self.analyze_with_vader(text)
+            analysis_method = 'VADER (local)'
+        else:
+            # Try HuggingFace for non-English
+            sentiment = self.analyze_with_huggingface(text)
+            if sentiment:
+                analysis_method = 'XLM-RoBERTa (multilingual)'
+            else:
+                # Fallback to VADER if API fails
+                sentiment = self.analyze_with_vader(text)
+                analysis_method = 'VADER (fallback)'
+        
+        # TextBlob for subjectivity (works best for English)
         blob = TextBlob(text)
         
-        # Sentence-level analysis
-        sentences = sent_tokenize(text)
+        # Sentence-level analysis (VADER for all, fast enough)
+        try:
+            sentences = sent_tokenize(text)
+        except:
+            sentences = text.split('. ')
+        
         sentence_sentiments = []
         for sent in sentences:
+            if not sent.strip():
+                continue
             sent_vader = self.sia.polarity_scores(sent)
             score = sent_vader['compound']
             if score >= 0.05:
@@ -68,9 +181,9 @@ class SentimentAnalyzer:
             })
         
         # Overall label
-        if vader['compound'] >= 0.05:
+        if sentiment['compound'] >= 0.05:
             overall_label = 'positive'
-        elif vader['compound'] <= -0.05:
+        elif sentiment['compound'] <= -0.05:
             overall_label = 'negative'
         else:
             overall_label = 'neutral'
@@ -84,16 +197,19 @@ class SentimentAnalyzer:
             subj_label = 'Mixed'
         
         return {
-            'compound': round(vader['compound'], 3),
-            'positive': round(vader['pos'] * 100, 1),
-            'negative': round(vader['neg'] * 100, 1),
-            'neutral': round(vader['neu'] * 100, 1),
+            'compound': sentiment['compound'],
+            'positive': sentiment['positive'],
+            'negative': sentiment['negative'],
+            'neutral': sentiment['neutral'],
             'polarity': round(blob.sentiment.polarity, 3),
             'subjectivity': round(blob.sentiment.subjectivity, 3),
             'subjectivity_label': subj_label,
             'overall_label': overall_label,
             'sentences': sentence_sentiments,
-            'text_preview': text[:200] + '...' if len(text) > 200 else text
+            'text_preview': text[:200] + '...' if len(text) > 200 else text,
+            'language': lang_name,
+            'language_code': lang_code,
+            'analysis_method': analysis_method,
         }
 
 
@@ -127,7 +243,7 @@ def fetch_reddit_post(url: str) -> tuple:
         return None, str(e)
 
 
-analyzer = SentimentAnalyzer()
+analyzer = HybridSentimentAnalyzer()
 
 
 @app.route('/')
