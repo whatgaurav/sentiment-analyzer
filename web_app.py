@@ -74,10 +74,10 @@ class HybridSentimentAnalyzer:
         except LangDetectException:
             return 'en', 'English'
     
-    def analyze_with_huggingface(self, text: str) -> dict:
+    def analyze_with_huggingface(self, text: str) -> tuple:
         """
         Analyze sentiment using HuggingFace multilingual model.
-        Returns None if API fails (triggers fallback to VADER).
+        Returns (result_dict, error_message) - result is None if API fails.
         """
         try:
             response = requests.post(
@@ -87,16 +87,17 @@ class HybridSentimentAnalyzer:
             )
             
             if response.status_code != 200:
-                print(f"HF API error: status {response.status_code}")
-                return None
+                return None, f"API returned status {response.status_code}"
             
             results = response.json()
-            print(f"HF API response: {results}")
             
             # Handle model loading state
             if isinstance(results, dict) and 'error' in results:
-                print(f"HF API error in response: {results}")
-                return None
+                return None, f"API error: {results.get('error', 'unknown')}"
+            
+            # Handle estimated_time (model is loading)
+            if isinstance(results, dict) and 'estimated_time' in results:
+                return None, f"Model loading, wait {results.get('estimated_time', '?')}s"
             
             # Parse results - handle nested list format [[{label, score}, ...]]
             if results and isinstance(results, list):
@@ -109,8 +110,6 @@ class HybridSentimentAnalyzer:
                         label = item.get('label', '').lower()
                         score = item.get('score', 0)
                         scores[label] = score
-                
-                print(f"Parsed scores: {scores}")
                 
                 # cardiffnlp model uses: LABEL_0=negative, LABEL_1=neutral, LABEL_2=positive
                 # Also handle direct labels: positive, negative, neutral
@@ -126,15 +125,17 @@ class HybridSentimentAnalyzer:
                     'positive': round(pos * 100, 1),
                     'negative': round(neg * 100, 1),
                     'neutral': round(neu * 100, 1),
-                    'debug': f"scores={scores}",
-                }
+                    'debug': f"raw={results}, scores={scores}",
+                }, None
             
-            print(f"HF API unexpected format: {type(results)}")
-            return None
+            return None, f"Unexpected format: {type(results).__name__}"
             
+        except requests.exceptions.Timeout:
+            return None, "API timeout (30s)"
+        except requests.exceptions.ConnectionError:
+            return None, "Connection error"
         except Exception as e:
-            print(f"HF API exception: {e}")
-            return None
+            return None, f"Exception: {str(e)}"
     
     def analyze_with_vader(self, text: str) -> dict:
         """Analyze sentiment using local VADER."""
@@ -156,18 +157,19 @@ class HybridSentimentAnalyzer:
         is_english = lang_code == 'en'
         
         # Choose analysis method
+        hf_error = None
         if is_english:
             sentiment = self.analyze_with_vader(text)
             analysis_method = 'VADER (local)'
         else:
             # Try HuggingFace for non-English
-            sentiment = self.analyze_with_huggingface(text)
+            sentiment, hf_error = self.analyze_with_huggingface(text)
             if sentiment:
                 analysis_method = 'XLM-RoBERTa (multilingual)'
             else:
                 # Fallback to VADER if API fails
                 sentiment = self.analyze_with_vader(text)
-                analysis_method = 'VADER (fallback)'
+                analysis_method = f'VADER (fallback: {hf_error})'
         
         # TextBlob for subjectivity (works best for English)
         blob = TextBlob(text)
