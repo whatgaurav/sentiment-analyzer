@@ -60,7 +60,8 @@ class HybridSentimentAnalyzer:
     """
     
     # HuggingFace Inference API (free, no key required for public models)
-    HF_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-xlm-roberta-base-sentiment"
+    # Using distilbert multilingual sentiment model
+    HF_API_URL = "https://api-inference.huggingface.co/models/lxyuan/distilbert-base-multilingual-cased-sentiments-student"
     
     def __init__(self):
         self.sia = SentimentIntensityAnalyzer()
