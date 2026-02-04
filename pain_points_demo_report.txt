@@ -1,0 +1,78 @@
+======================================================================
+DRIVER PAIN POINTS IN INDIA - ANALYSIS REPORT
+Based on Reddit Discussions (Demo Data)
+======================================================================
+
+1. LOW EARNINGS
+--------------------------------------------------
+   Severity: 🔴 HIGH
+   Mentions: 8 posts/comments
+   Avg Sentiment: -0.59 (scale: -1 to +1)
+   Description: Low earnings, high costs, and unfair commission structures
+
+   Sample Quotes:
+   1. "No minimum wage, no PF, no health insurance, no sick leave."
+   2. "They refused to pay and hit him when he asked for the fare."
+   3. "He was attacked by drunk passengers last week in South Delhi late night."
+
+
+2. CUSTOMER BEHAVIOR
+--------------------------------------------------
+   Severity: 🟡 MEDIUM
+   Mentions: 7 posts/comments
+   Avg Sentiment: -0.53 (scale: -1 to +1)
+   Description: Difficult customers, unfair ratings, and payment issues
+
+   Sample Quotes:
+   1. "And if you say no, they threaten bad rating."
+   2. "No explanation, no appeal process."
+   3. "No severance, no explanation, just gone."
+
+
+3. COMPETITION OVERSUPPLY
+--------------------------------------------------
+   Severity: 🟡 MEDIUM
+   Mentions: 7 posts/comments
+   Avg Sentiment: -0.44 (scale: -1 to +1)
+   Description: Too many drivers, low demand, and intense competition
+
+   Sample Quotes:
+   1. "When I complain, they just send automated responses."
+   2. "That means no breaks, no food, just drive drive drive."
+   3. "Waiting time between rides is horrible."
+
+
+4. WORK LIFE BALANCE
+--------------------------------------------------
+   Severity: 🟡 MEDIUM
+   Mentions: 6 posts/comments
+   Avg Sentiment: -0.56 (scale: -1 to +1)
+   Description: Long working hours, stress, and lack of work-life balance
+
+   Sample Quotes:
+   1. "That means no breaks, no food, just drive drive drive."
+   2. "Commission is killing us slowly."
+   3. "My health is suffering, hardly see my family."
+
+
+5. VEHICLE MAINTENANCE
+--------------------------------------------------
+   Severity: 🟡 MEDIUM
+   Mentions: 5 posts/comments
+   Avg Sentiment: -0.39 (scale: -1 to +1)
+   Description: Vehicle costs, maintenance burden, and regulatory issues
+
+   Sample Quotes:
+   1. "It's a cycle of debt and risk for delivery drivers."
+   2. "No accident insurance for gig workers."
+   3. "Accident happened while delivering food for Dunzo."
+
+
+======================================================================
+METHODOLOGY
+--------------------------------------------------
+- Data Source: Sample Reddit posts (demo mode)
+- Analysis: VADER Sentiment Analysis + Keyword Extraction
+- Categories: Pre-defined based on common driver issues
+- Severity: Based on mention frequency and sentiment intensity
+======================================================================

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #8892b0;
+            font-size: 1.1rem;
+        }
+
+        .author {
+            color: #00d9ff;
+            font-size: 0.95rem;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tab.active {
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+
+        .input-group {
+            display: none;
+        }
+
+        .input-group.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+
+        textarea::placeholder {
+            color: #5a6a8a;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+
+        input[type="text"]::placeholder {
+            color: #5a6a8a;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #00d9ff;
+        }
+
+        .overall-sentiment {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .sentiment-badge.positive {
+            background: linear-gradient(90deg, #00ff88, #00d9ff);
+            color: #1a1a2e;
+        }
+
+        .sentiment-badge.negative {
+            background: linear-gradient(90deg, #ff4757, #ff6b81);
+            color: #fff;
+        }
+
+        .sentiment-badge.neutral {
+            background: linear-gradient(90deg, #ffa502, #ff7f50);
+            color: #1a1a2e;
+        }
+
+        .score-display {
+            margin-top: 20px;
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .score-label {
+            color: #8892b0;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .sentiment-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin-top: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sentiment-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .sentiment-bar-fill.positive {
+            background: linear-gradient(90deg, #00ff88, #00d9ff);
+        }
+
+        .sentiment-bar-fill.negative {
+            background: linear-gradient(90deg, #ff4757, #ff6b81);
+        }
+
+        .sentiment-bar-fill.neutral {
+            background: linear-gradient(90deg, #ffa502, #ff7f50);
+        }
+
+        .bar-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            color: #5a6a8a;
+            font-size: 0.8rem;
+        }
+
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .breakdown-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .breakdown-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .breakdown-value.pos { color: #00ff88; }
+        .breakdown-value.neg { color: #ff4757; }
+        .breakdown-value.neu { color: #ffa502; }
+
+        .breakdown-label {
+            color: #8892b0;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .textblob-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .textblob-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .textblob-item h3 {
+            color: #8892b0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .textblob-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d9ff;
+        }
+
+        .textblob-label {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #8892b0;
+        }
+
+        .sentence-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .sentence-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .sentence-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+
+        .sentence-indicator.positive { background: #00ff88; }
+        .sentence-indicator.negative { background: #ff4757; }
+        .sentence-indicator.neutral { background: #ffa502; }
+
+        .sentence-content {
+            flex: 1;
+        }
+
+        .sentence-text {
+            color: #ccd6f6;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .sentence-score {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #5a6a8a;
+        }
+
+        .sentence-score span {
+            font-weight: 600;
+        }
+
+        .sentence-score span.positive { color: #00ff88; }
+        .sentence-score span.negative { color: #ff4757; }
+        .sentence-score span.neutral { color: #ffa502; }
+
+        .reddit-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .meta-label {
+            color: #5a6a8a;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .meta-value {
+            color: #ccd6f6;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: rgba(255, 71, 87, 0.2);
+            border: 1px solid #ff4757;
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: #ff6b81;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #5a6a8a;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .breakdown-grid { grid-template-columns: 1fr; }
+            .textblob-grid { grid-template-columns: 1fr; }
+            .reddit-meta { grid-template-columns: 1fr; }
+            .tabs { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Sentiment Analyzer</h1>
+            <p class="subtitle">Analyze the emotional tone of any text or Reddit post</p>
+            <p class="author">@jaingaurav</p>
+        </header>
+
+        <section class="input-section">
+            <div class="tabs">
+                <button class="tab active" data-tab="text">📝 Custom Text</button>
+                <button class="tab" data-tab="reddit">🔗 Reddit URL</button>
+            </div>
+
+            <div class="input-group active" id="text-input">
+                <textarea id="text-area" placeholder="Paste or type your text here...&#10;&#10;Example: I've been driving for Uber for 2 years. The pay has decreased significantly while fuel costs keep rising. Customer support is unhelpful and the app crashes frequently."></textarea>
+            </div>
+
+            <div class="input-group" id="reddit-input">
+                <input type="text" id="reddit-url" placeholder="Paste Reddit post URL (e.g., https://reddit.com/r/india/comments/...)">
+            </div>
+
+            <button class="analyze-btn" id="analyze-btn">Analyze Sentiment</button>
+            
+            <div class="error-message" id="error-message"></div>
+        </section>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing sentiment...</p>
+        </div>
+
+        <section class="results-section" id="results">
+            <!-- Reddit Metadata (shown only for Reddit posts) -->
+            <div class="result-card" id="reddit-meta-card" style="display: none;">
+                <h2>📌 Reddit Post</h2>
+                <div class="reddit-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">Subreddit</div>
+                        <div class="meta-value" id="meta-subreddit">-</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Score</div>
+                        <div class="meta-value" id="meta-score">-</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Comments</div>
+                        <div class="meta-value" id="meta-comments">-</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Title</div>
+                        <div class="meta-value" id="meta-title">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Sentiment -->
+            <div class="result-card">
+                <h2>📊 Overall Sentiment</h2>
+                <div class="overall-sentiment">
+                    <span class="sentiment-badge" id="sentiment-badge">NEUTRAL</span>
+                    <div class="score-display" id="compound-score">0.000</div>
+                    <div class="score-label">Compound Score (-1 to +1)</div>
+                    <div class="sentiment-bar">
+                        <div class="sentiment-bar-fill" id="sentiment-bar"></div>
+                    </div>
+                    <div class="bar-labels">
+                        <span>-1 (Negative)</span>
+                        <span>0 (Neutral)</span>
+                        <span>+1 (Positive)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="result-card">
+                <h2>📈 Sentiment Breakdown</h2>
+                <div class="breakdown-grid">
+                    <div class="breakdown-item">
+                        <div class="breakdown-value pos" id="positive-pct">0%</div>
+                        <div class="breakdown-label">Positive</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value neg" id="negative-pct">0%</div>
+                        <div class="breakdown-label">Negative</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value neu" id="neutral-pct">0%</div>
+                        <div class="breakdown-label">Neutral</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TextBlob Analysis -->
+            <div class="result-card">
+                <h2>🔬 TextBlob Analysis</h2>
+                <div class="textblob-grid">
+                    <div class="textblob-item">
+                        <h3>Polarity</h3>
+                        <div class="textblob-value" id="polarity">0.000</div>
+                        <span class="textblob-label">-1 (negative) to +1 (positive)</span>
+                    </div>
+                    <div class="textblob-item">
+                        <h3>Subjectivity</h3>
+                        <div class="textblob-value" id="subjectivity">0.000</div>
+                        <span class="textblob-label" id="subjectivity-label">Mixed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentence Analysis -->
+            <div class="result-card">
+                <h2>📝 Sentence-by-Sentence Analysis</h2>
+                <div class="sentence-list" id="sentence-list"></div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Powered by VADER Sentiment Analysis & TextBlob</p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.input-group').forEach(g => g.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const targetId = tab.dataset.tab + '-input';
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        // Analyze button
+        document.getElementById('analyze-btn').addEventListener('click', async () => {
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            const btn = document.getElementById('analyze-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const errorDiv = document.getElementById('error-message');
+            
+            // Hide previous results and errors
+            results.classList.remove('visible');
+            errorDiv.classList.remove('visible');
+            
+            let endpoint, payload;
+            
+            if (activeTab === 'text') {
+                const text = document.getElementById('text-area').value.trim();
+                if (!text) {
+                    showError('Please enter some text to analyze.');
+                    return;
+                }
+                endpoint = '/analyze';
+                payload = { text };
+            } else {
+                const url = document.getElementById('reddit-url').value.trim();
+                if (!url) {
+                    showError('Please enter a Reddit URL.');
+                    return;
+                }
+                endpoint = '/analyze-reddit';
+                payload = { url };
+            }
+            
+            // Show loading
+            btn.disabled = true;
+            loading.classList.add('visible');
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                displayResults(data, activeTab === 'reddit');
+                
+            } catch (err) {
+                showError('An error occurred. Please try again.');
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('visible');
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('visible');
+        }
+
+        function displayResults(data, isReddit) {
+            const results = document.getElementById('results');
+            
+            // Reddit metadata
+            const metaCard = document.getElementById('reddit-meta-card');
+            if (isReddit && data.reddit_metadata) {
+                metaCard.style.display = 'block';
+                document.getElementById('meta-subreddit').textContent = 'r/' + data.reddit_metadata.subreddit;
+                document.getElementById('meta-score').textContent = data.reddit_metadata.score;
+                document.getElementById('meta-comments').textContent = data.reddit_metadata.num_comments;
+                document.getElementById('meta-title').textContent = data.reddit_metadata.title;
+            } else {
+                metaCard.style.display = 'none';
+            }
+            
+            // Overall sentiment
+            const badge = document.getElementById('sentiment-badge');
+            badge.className = 'sentiment-badge ' + data.overall_label;
+            badge.textContent = data.overall_label.toUpperCase();
+            
+            document.getElementById('compound-score').textContent = data.compound.toFixed(3);
+            
+            // Sentiment bar (convert -1 to 1 scale to percentage)
+            const barFill = document.getElementById('sentiment-bar');
+            const barPercent = ((data.compound + 1) / 2) * 100;
+            barFill.style.width = barPercent + '%';
+            barFill.className = 'sentiment-bar-fill ' + data.overall_label;
+            
+            // Breakdown
+            document.getElementById('positive-pct').textContent = data.positive + '%';
+            document.getElementById('negative-pct').textContent = data.negative + '%';
+            document.getElementById('neutral-pct').textContent = data.neutral + '%';
+            
+            // TextBlob
+            document.getElementById('polarity').textContent = data.polarity.toFixed(3);
+            document.getElementById('subjectivity').textContent = data.subjectivity.toFixed(3);
+            document.getElementById('subjectivity-label').textContent = data.subjectivity_label;
+            
+            // Sentences
+            const sentenceList = document.getElementById('sentence-list');
+            sentenceList.innerHTML = '';
+            
+            data.sentences.forEach((sent, idx) => {
+                const item = document.createElement('div');
+                item.className = 'sentence-item';
+                item.innerHTML = `
+                    <div class="sentence-indicator ${sent.label}"></div>
+                    <div class="sentence-content">
+                        <div class="sentence-text">${escapeHtml(sent.text)}</div>
+                        <div class="sentence-score">
+                            Score: <span class="${sent.label}">${sent.score.toFixed(3)}</span>
+                            &nbsp;•&nbsp; ${capitalize(sent.label)}
+                        </div>
+                    </div>
+                `;
+                sentenceList.appendChild(item);
+            });
+            
+            // Show results
+            results.classList.add('visible');
+            
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Allow Enter key to submit in URL input
+        document.getElementById('reddit-url').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('analyze-btn').click();
+            }
+        });
+
+        // Ctrl+Enter to submit in textarea
+        document.getElementById('text-area').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                document.getElementById('analyze-btn').click();
+            }
+        });
+    </script>
+</body>
+</html>

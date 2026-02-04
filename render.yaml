@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: sentiment-analyzer
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -c "import nltk; nltk.download('vader_lexicon'); nltk.download('punkt'); nltk.download('punkt_tab')"
+    startCommand: gunicorn web_app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: FLASK_ENV
+        value: production
+      - key: REDDIT_CLIENT_ID
+        sync: false
+      - key: REDDIT_CLIENT_SECRET
+        sync: false
