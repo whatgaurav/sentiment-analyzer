@@ -26,7 +26,10 @@ def setup_nltk():
 setup_nltk()
 load_dotenv()
 
-app = Flask(__name__)
+# Get the directory where this script is located
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
 CORS(app)  # Enable cross-origin requests from any website
 
 
