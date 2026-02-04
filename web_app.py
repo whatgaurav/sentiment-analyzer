@@ -83,16 +83,19 @@ class HybridSentimentAnalyzer:
             response = requests.post(
                 self.HF_API_URL,
                 json={"inputs": text[:512]},  # Model max length
-                timeout=15
+                timeout=30
             )
             
             if response.status_code != 200:
+                print(f"HF API error: status {response.status_code}")
                 return None
             
             results = response.json()
+            print(f"HF API response: {results}")
             
             # Handle model loading state
             if isinstance(results, dict) and 'error' in results:
+                print(f"HF API error in response: {results}")
                 return None
             
             # Parse results - handle nested list format [[{label, score}, ...]]
@@ -102,9 +105,12 @@ class HybridSentimentAnalyzer:
                 
                 scores = {}
                 for item in items:
-                    label = item.get('label', '').lower()
-                    score = item.get('score', 0)
-                    scores[label] = score
+                    if isinstance(item, dict):
+                        label = item.get('label', '').lower()
+                        score = item.get('score', 0)
+                        scores[label] = score
+                
+                print(f"Parsed scores: {scores}")
                 
                 # cardiffnlp model uses: LABEL_0=negative, LABEL_1=neutral, LABEL_2=positive
                 # Also handle direct labels: positive, negative, neutral
@@ -120,11 +126,14 @@ class HybridSentimentAnalyzer:
                     'positive': round(pos * 100, 1),
                     'negative': round(neg * 100, 1),
                     'neutral': round(neu * 100, 1),
+                    'debug': f"scores={scores}",
                 }
             
+            print(f"HF API unexpected format: {type(results)}")
             return None
             
-        except Exception:
+        except Exception as e:
+            print(f"HF API exception: {e}")
             return None
     
     def analyze_with_vader(self, text: str) -> dict:
@@ -218,6 +227,7 @@ class HybridSentimentAnalyzer:
             'language': lang_name,
             'language_code': lang_code,
             'analysis_method': analysis_method,
+            'debug_info': sentiment.get('debug', None),
         }
 
 
