@@ -8,15 +8,15 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from nltk.sentiment import SentimentIntensityAnalyzer
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from nltk.tokenize import sent_tokenize
 from textblob import TextBlob
 import nltk
 import praw
 
-# Setup NLTK
+# Setup NLTK (only need tokenizers now, VADER is standalone)
 def setup_nltk():
-    resources = ['vader_lexicon', 'punkt', 'punkt_tab']
+    resources = ['punkt', 'punkt_tab']
     for resource in resources:
         try:
             nltk.download(resource, quiet=True)
