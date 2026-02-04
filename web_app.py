@@ -83,7 +83,7 @@ class HybridSentimentAnalyzer:
             response = requests.post(
                 self.HF_API_URL,
                 json={"inputs": text[:512]},  # Model max length
-                timeout=10
+                timeout=15
             )
             
             if response.status_code != 200:
@@ -95,14 +95,22 @@ class HybridSentimentAnalyzer:
             if isinstance(results, dict) and 'error' in results:
                 return None
             
-            # Parse results: [{"label": "positive", "score": 0.95}, ...]
-            if results and isinstance(results, list) and isinstance(results[0], list):
-                scores = {item['label']: item['score'] for item in results[0]}
+            # Parse results - handle nested list format [[{label, score}, ...]]
+            if results and isinstance(results, list):
+                # Handle nested list [[...]]
+                items = results[0] if isinstance(results[0], list) else results
                 
-                # Map to our format (model uses: positive, neutral, negative)
-                pos = scores.get('positive', 0)
-                neg = scores.get('negative', 0)
-                neu = scores.get('neutral', 0)
+                scores = {}
+                for item in items:
+                    label = item.get('label', '').lower()
+                    score = item.get('score', 0)
+                    scores[label] = score
+                
+                # cardiffnlp model uses: LABEL_0=negative, LABEL_1=neutral, LABEL_2=positive
+                # Also handle direct labels: positive, negative, neutral
+                pos = scores.get('positive', 0) or scores.get('label_2', 0)
+                neg = scores.get('negative', 0) or scores.get('label_0', 0)
+                neu = scores.get('neutral', 0) or scores.get('label_1', 0)
                 
                 # Calculate compound score similar to VADER (-1 to 1)
                 compound = pos - neg
