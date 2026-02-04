@@ -59,7 +59,7 @@ class HybridSentimentAnalyzer:
     - Fallback: VADER if API fails
     """
     
-    # HuggingFace Inference API (free, no key required for public models)
+    # HuggingFace Inference API (requires free token)
     # Using nlptown's popular multilingual sentiment model (1-5 stars)
     HF_API_URL = "https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment"
     
@@ -81,8 +81,14 @@ class HybridSentimentAnalyzer:
         Returns (result_dict, error_message) - result is None if API fails.
         """
         try:
+            headers = {"Content-Type": "application/json"}
+            hf_token = os.getenv('HUGGINGFACE_TOKEN')
+            if hf_token:
+                headers["Authorization"] = f"Bearer {hf_token}"
+            
             response = requests.post(
                 self.HF_API_URL,
+                headers=headers,
                 json={"inputs": text[:512]},  # Model max length
                 timeout=30
             )
