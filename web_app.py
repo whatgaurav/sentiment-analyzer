@@ -93,8 +93,11 @@ class HybridSentimentAnalyzer:
             response = requests.post(
                 self.HF_API_URL,
                 headers=headers,
-                json={"inputs": text[:512]},  # Model max length
-                timeout=30
+                json={
+                    "inputs": text[:512],  # Model max length
+                    "options": {"wait_for_model": True}  # Wait for model to load
+                },
+                timeout=120  # 2 min timeout for model cold starts
             )
             
             if response.status_code != 200:
@@ -164,7 +167,7 @@ class HybridSentimentAnalyzer:
             return None, f"Unexpected format: {type(results).__name__}"
             
         except requests.exceptions.Timeout:
-            return None, "API timeout (30s)"
+            return None, "API timeout - model may be cold starting, try again in 30s"
         except requests.exceptions.ConnectionError:
             return None, "Connection error"
         except Exception as e:
