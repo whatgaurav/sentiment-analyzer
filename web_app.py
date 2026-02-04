@@ -60,8 +60,8 @@ class HybridSentimentAnalyzer:
     """
     
     # HuggingFace Inference API (free, no key required for public models)
-    # Using distilbert multilingual sentiment model
-    HF_API_URL = "https://api-inference.huggingface.co/models/lxyuan/distilbert-base-multilingual-cased-sentiments-student"
+    # Using nlptown's popular multilingual sentiment model (1-5 stars)
+    HF_API_URL = "https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment"
     
     def __init__(self):
         self.sia = SentimentIntensityAnalyzer()
@@ -112,11 +112,33 @@ class HybridSentimentAnalyzer:
                         score = item.get('score', 0)
                         scores[label] = score
                 
-                # cardiffnlp model uses: LABEL_0=negative, LABEL_1=neutral, LABEL_2=positive
-                # Also handle direct labels: positive, negative, neutral
-                pos = scores.get('positive', 0) or scores.get('label_2', 0)
-                neg = scores.get('negative', 0) or scores.get('label_0', 0)
-                neu = scores.get('neutral', 0) or scores.get('label_1', 0)
+                # Handle different model formats:
+                # 1. Direct labels: positive, negative, neutral
+                # 2. LABEL_X format: LABEL_0=neg, LABEL_1=neu, LABEL_2=pos
+                # 3. Star ratings: 1 star, 2 stars, ..., 5 stars (nlptown model)
+                
+                if 'positive' in scores or 'negative' in scores:
+                    pos = scores.get('positive', 0)
+                    neg = scores.get('negative', 0)
+                    neu = scores.get('neutral', 0)
+                elif 'label_0' in scores:
+                    pos = scores.get('label_2', 0)
+                    neg = scores.get('label_0', 0)
+                    neu = scores.get('label_1', 0)
+                elif '5 stars' in scores or '1 star' in scores:
+                    # nlptown model uses star ratings
+                    # Convert to positive/negative/neutral
+                    s1 = scores.get('1 star', 0)
+                    s2 = scores.get('2 stars', 0)
+                    s3 = scores.get('3 stars', 0)
+                    s4 = scores.get('4 stars', 0)
+                    s5 = scores.get('5 stars', 0)
+                    
+                    neg = s1 + s2  # 1-2 stars = negative
+                    neu = s3       # 3 stars = neutral
+                    pos = s4 + s5  # 4-5 stars = positive
+                else:
+                    return None, f"Unknown label format: {list(scores.keys())}"
                 
                 # Calculate compound score similar to VADER (-1 to 1)
                 compound = pos - neg
@@ -126,7 +148,7 @@ class HybridSentimentAnalyzer:
                     'positive': round(pos * 100, 1),
                     'negative': round(neg * 100, 1),
                     'neutral': round(neu * 100, 1),
-                    'debug': f"raw={results}, scores={scores}",
+                    'debug': f"scores={scores}",
                 }, None
             
             return None, f"Unexpected format: {type(results).__name__}"
