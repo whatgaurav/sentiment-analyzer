@@ -61,7 +61,7 @@ class HybridSentimentAnalyzer:
     
     # HuggingFace Inference API (requires free token)
     # Using nlptown's popular multilingual sentiment model (1-5 stars)
-    HF_API_URL = "https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment"
+    HF_API_URL = "https://router.huggingface.co/hf-inference/models/nlptown/bert-base-multilingual-uncased-sentiment"
     
     def __init__(self):
         self.sia = SentimentIntensityAnalyzer()
@@ -81,10 +81,14 @@ class HybridSentimentAnalyzer:
         Returns (result_dict, error_message) - result is None if API fails.
         """
         try:
-            headers = {"Content-Type": "application/json"}
             hf_token = os.getenv('HUGGINGFACE_TOKEN')
-            if hf_token:
-                headers["Authorization"] = f"Bearer {hf_token}"
+            if not hf_token:
+                return None, "HUGGINGFACE_TOKEN not configured"
+            
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {hf_token}"
+            }
             
             response = requests.post(
                 self.HF_API_URL,
