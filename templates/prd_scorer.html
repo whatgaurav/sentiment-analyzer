@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRD Scorer - Evaluate Your Product Requirements Document</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .upload-section {
+            padding: 2.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: var(--gray-50);
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: #f0f0ff;
+        }
+
+        .upload-area.has-file {
+            border-color: var(--success);
+            background: #ecfdf5;
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: white;
+        }
+
+        .upload-area h3 {
+            font-size: 1.25rem;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-area p {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        .file-info {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: white;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-info .file-name {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .file-info .remove-file {
+            color: var(--danger);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .or-divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .text-input-area {
+            margin-top: 1rem;
+        }
+
+        .text-input-area textarea {
+            width: 100%;
+            height: 200px;
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .text-input-area textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .text-input-area textarea::placeholder {
+            color: var(--gray-400);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            padding: 2.5rem;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-circle .bg {
+            stroke: var(--gray-200);
+        }
+
+        .score-circle .progress {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .score-value span {
+            font-size: 1.25rem;
+            color: var(--gray-500);
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .grade-A { background: #dcfce7; color: #166534; }
+        .grade-B { background: #dbeafe; color: #1e40af; }
+        .grade-C { background: #fef3c7; color: #92400e; }
+        .grade-D { background: #fed7aa; color: #9a3412; }
+        .grade-F { background: #fee2e2; color: #991b1b; }
+
+        .assessment {
+            font-size: 1.1rem;
+            color: var(--gray-600);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .word-count {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+
+        /* Detailed Scores */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .score-item {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+
+        .score-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-item-name {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        .score-item-value {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .score-bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease-out;
+        }
+
+        /* Strengths Section */
+        .strengths-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .strengths-section h3 {
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strength-item {
+            background: #ecfdf5;
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 0.75rem;
+        }
+
+        .strength-item p {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        /* Improvements Section */
+        .improvements-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .improvements-section h3 {
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .improvement-item {
+            background: #fffbeb;
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 0.75rem;
+        }
+
+        .improvement-item h4 {
+            font-size: 0.9rem;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .improvement-item p {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        /* AI Badge */
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+        }
+
+        .analysis-method {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            margin-top: 0.25rem;
+        }
+
+        /* Reset Button */
+        .reset-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            margin-top: 1.5rem;
+        }
+
+        .reset-btn:hover {
+            background: var(--gray-200);
+        }
+
+        /* Error Message */
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .upload-section, .results-section {
+                padding: 1.5rem;
+            }
+
+            .score-circle {
+                width: 140px;
+                height: 140px;
+            }
+
+            .score-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>PRD Scorer</h1>
+            <p>Upload your PRD and get an intelligent quality score with actionable feedback</p>
+            <div class="ai-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                Powered by Llama 3.3 70B (Free)
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="upload-section" id="uploadSection">
+                <div class="error-message" id="errorMessage"></div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                    </div>
+                    <h3>Drop your PRD here</h3>
+                    <p>or click to browse (PDF, DOCX, TXT, MD)</p>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.md" hidden>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <span class="file-name" id="fileName"></span>
+                        <span class="remove-file" id="removeFile">✕</span>
+                    </div>
+                </div>
+
+                <div class="or-divider">— or paste your PRD text below —</div>
+
+                <div class="text-input-area">
+                    <textarea id="prdText" placeholder="Paste your PRD content here..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" id="analyzeBtn">
+                    <span id="btnText">Analyze PRD</span>
+                    <div class="spinner" id="btnSpinner" style="display: none;"></div>
+                </button>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="score-display">
+                    <div class="score-circle">
+                        <svg width="160" height="160" viewBox="0 0 160 160">
+                            <circle class="bg" cx="80" cy="80" r="70" fill="none" stroke-width="12"/>
+                            <circle class="progress" id="scoreProgress" cx="80" cy="80" r="70" fill="none" stroke-width="12" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+                        </svg>
+                        <div class="score-value">
+                            <span id="scoreNumber">0</span><span>/10</span>
+                        </div>
+                    </div>
+                    <div class="grade-badge" id="gradeBadge">-</div>
+                    <p class="assessment" id="assessment"></p>
+                    <p class="word-count" id="wordCount"></p>
+                </div>
+
+                <div class="scores-grid" id="scoresGrid"></div>
+
+                <div class="strengths-section" id="strengthsSection" style="display: none;">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        Key Strengths
+                    </h3>
+                    <div id="strengthsList"></div>
+                </div>
+
+                <div class="improvements-section" id="improvementsSection">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        Top Areas to Improve
+                    </h3>
+                    <div id="improvementsList"></div>
+                </div>
+
+                <button class="btn reset-btn" id="resetBtn">Analyze Another PRD</button>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>PRD Scorer evaluates 10 key dimensions of product requirements documents</p>
+        </footer>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+        const prdText = document.getElementById('prdText');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const errorMessage = document.getElementById('errorMessage');
+        const uploadSection = document.getElementById('uploadSection');
+        const resultsSection = document.getElementById('resultsSection');
+
+        let selectedFile = null;
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain', 'text/markdown'];
+            const allowedExts = ['.pdf', '.docx', '.doc', '.txt', '.md'];
+            
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedExts.includes(ext)) {
+                showError('Please upload a PDF, DOCX, TXT, or MD file.');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileInfo.style.display = 'inline-flex';
+            uploadArea.classList.add('has-file');
+            prdText.value = ''; // Clear text area when file is selected
+            hideError();
+        }
+
+        removeFile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadArea.classList.remove('has-file');
+        });
+
+        // Analysis
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile && !prdText.value.trim()) {
+                showError('Please upload a file or paste PRD text.');
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+
+            try {
+                let response;
+                
+                if (selectedFile) {
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    response = await fetch('/score', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    response = await fetch('/score', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: prdText.value })
+                    });
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                    setLoading(false);
+                    return;
+                }
+
+                displayResults(data);
+            } catch (error) {
+                showError('An error occurred. Please try again.');
+                console.error(error);
+            }
+
+            setLoading(false);
+        });
+
+        function setLoading(loading) {
+            analyzeBtn.disabled = loading;
+            btnText.style.display = loading ? 'none' : 'inline';
+            btnSpinner.style.display = loading ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        function displayResults(data) {
+            uploadSection.style.display = 'none';
+            resultsSection.classList.add('show');
+
+            // Animate score
+            const score = data.total_score;
+            const scoreNumber = document.getElementById('scoreNumber');
+            const scoreProgress = document.getElementById('scoreProgress');
+            const circumference = 439.8;
+            const offset = circumference - (score / 10) * circumference;
+
+            // Set color based on score
+            let progressColor;
+            if (score >= 7) progressColor = '#10b981';
+            else if (score >= 5) progressColor = '#f59e0b';
+            else progressColor = '#ef4444';
+
+            scoreProgress.style.stroke = progressColor;
+            
+            // Animate
+            setTimeout(() => {
+                scoreProgress.style.strokeDashoffset = offset;
+                animateNumber(scoreNumber, 0, score, 1000);
+            }, 100);
+
+            // Grade badge
+            const gradeBadge = document.getElementById('gradeBadge');
+            gradeBadge.textContent = `Grade: ${data.grade}`;
+            gradeBadge.className = `grade-badge grade-${data.grade}`;
+
+            // Assessment
+            document.getElementById('assessment').textContent = data.assessment;
+            document.getElementById('wordCount').textContent = `Document length: ${data.word_count} words`;
+
+            // Detailed scores
+            const scoresGrid = document.getElementById('scoresGrid');
+            scoresGrid.innerHTML = '';
+            
+            const scoreLabels = {
+                'problem_statement': 'Problem Statement',
+                'target_users': 'Target Users',
+                'success_metrics': 'Success Metrics',
+                'requirements_clarity': 'Requirements Clarity',
+                'scope_definition': 'Scope Definition',
+                'technical_considerations': 'Technical Considerations',
+                'timeline': 'Timeline & Milestones',
+                'risks_dependencies': 'Risks & Dependencies',
+                'acceptance_criteria': 'Acceptance Criteria',
+                'completeness': 'Document Completeness'
+            };
+
+            for (const [key, value] of Object.entries(data.scores)) {
+                const item = document.createElement('div');
+                item.className = 'score-item';
+                
+                let barColor;
+                if (value >= 7) barColor = '#10b981';
+                else if (value >= 5) barColor = '#f59e0b';
+                else barColor = '#ef4444';
+
+                item.innerHTML = `
+                    <div class="score-item-header">
+                        <span class="score-item-name">${scoreLabels[key] || key}</span>
+                        <span class="score-item-value" style="color: ${barColor}">${value}/10</span>
+                    </div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" style="width: 0%; background: ${barColor}" data-width="${value * 10}%"></div>
+                    </div>
+                `;
+                scoresGrid.appendChild(item);
+            }
+
+            // Animate bars
+            setTimeout(() => {
+                document.querySelectorAll('.score-bar-fill').forEach(bar => {
+                    bar.style.width = bar.dataset.width;
+                });
+            }, 200);
+
+            // Strengths
+            const strengthsSection = document.getElementById('strengthsSection');
+            const strengthsList = document.getElementById('strengthsList');
+            strengthsList.innerHTML = '';
+            
+            if (data.top_strengths && data.top_strengths.length > 0) {
+                strengthsSection.style.display = 'block';
+                data.top_strengths.forEach(strength => {
+                    const item = document.createElement('div');
+                    item.className = 'strength-item';
+                    item.innerHTML = `<p>${strength}</p>`;
+                    strengthsList.appendChild(item);
+                });
+            } else {
+                strengthsSection.style.display = 'none';
+            }
+
+            // Improvements
+            const improvementsList = document.getElementById('improvementsList');
+            improvementsList.innerHTML = '';
+            
+            data.top_improvements.forEach(imp => {
+                const item = document.createElement('div');
+                item.className = 'improvement-item';
+                item.innerHTML = `
+                    <h4>${imp.area} (${imp.score}/10)</h4>
+                    <p>${imp.feedback}</p>
+                `;
+                improvementsList.appendChild(item);
+            });
+
+            // Show analysis method if available
+            const wordCountEl = document.getElementById('wordCount');
+            let methodText = `Document length: ${data.word_count} words`;
+            if (data.analysis_method) {
+                methodText += ` • Analyzed by ${data.analysis_method}`;
+            }
+            wordCountEl.textContent = methodText;
+        }
+
+        function animateNumber(element, start, end, duration) {
+            const range = end - start;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = start + range * easeOut;
+                element.textContent = current.toFixed(1);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // Reset
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            resultsSection.classList.remove('show');
+            uploadSection.style.display = 'block';
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadArea.classList.remove('has-file');
+            prdText.value = '';
+            
+            // Reset score animation
+            document.getElementById('scoreProgress').style.strokeDashoffset = 439.8;
+            document.getElementById('scoreNumber').textContent = '0';
+            
+            // Hide strengths section
+            document.getElementById('strengthsSection').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

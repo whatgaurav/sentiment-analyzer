@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Other apps in this repo
+analyzer.py
+demo_analyzer.py
+sentiment_tool.py
+web_app.py
+pain_points_demo_report.txt
+
+# Misc
+*.md
+render.yaml
+.env.example

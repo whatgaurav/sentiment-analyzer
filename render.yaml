@@ -1,15 +1,13 @@
 services:
   - type: web
-    name: sentiment-analyzer
+    name: prd-scorer
     runtime: python
-    buildCommand: pip install -r requirements.txt && python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
-    startCommand: gunicorn web_app:app
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn prd_scorer:app --bind 0.0.0.0:$PORT --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
       - key: FLASK_ENV
         value: production
-      - key: REDDIT_CLIENT_ID
-        sync: false
-      - key: REDDIT_CLIENT_SECRET
+      - key: OPENROUTER_API_KEY
         sync: false
